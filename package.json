@@ -21,5 +21,8 @@
 	"keywords": [
 		"node",
 		"express"
-	]
+	],
+	"engines": {
+		"node": ">=18 <19"
+	}
 }
