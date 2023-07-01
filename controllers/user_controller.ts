@@ -1,11 +1,11 @@
-import {Router} from "express"
+import {Router, Request, Response} from "express"
 import mongoose from "mongoose"
-import User from "../model/user.js"
+import User from "../model/user"
 
-let UserController = new Router()
+let UserController = Router()
 const dateRegex = /^\d{4}\-\d{2}\-\d{2}$/
 
-UserController.route("/users").get((req, res)=>{
+UserController.route("/users").get((_: Request, res: Response)=>{
   User.find({}).select("-__v").then((users)=>{
     res.json(users)
   }).catch((err)=>{
@@ -55,7 +55,17 @@ UserController.post('/users/:_id/exercises', async (req, res)=>{
 })
 
 
-UserController.get('/users/:_id/logs', async (req, res)=>{
+interface LogRequest extends Request{
+  _id?: number;
+  to?: string;
+  from?: string;
+  limit?: string
+
+}
+
+
+UserController.get('/users/:_id/logs', async (req: Request, res: Response)=>{
+  
   const _id = req.params._id;
   const to = req.query.to;
   const from = req.query.from;
@@ -68,8 +78,8 @@ UserController.get('/users/:_id/logs', async (req, res)=>{
             // user id
             {_id: new mongoose.Types.ObjectId(_id)},
             // date between from ad to
-            ... (dateRegex.test(to) && dateRegex.test(from))?
-              [ {'log.date': {$gte: new Date(from), $lte: new Date(to) } }]:
+            ... (dateRegex.test(to as string) && dateRegex.test(from as string))?
+              [ {'log.date': {$gte: new Date(from as string), $lte: new Date(to as string) } }]:
               []
           ]
         } 
@@ -77,7 +87,7 @@ UserController.get('/users/:_id/logs', async (req, res)=>{
       {$project:{
           username: 1,
           count: {$size: "$log"}, // count  
-          log: limit ? { $slice: ["$log", 0, parseInt(limit) ]}: 1,// limit
+          log: limit ? { $slice: ["$log", 0, parseInt(limit as string) ]}: 1,// limit
         }
       },
     ]  
@@ -85,7 +95,7 @@ UserController.get('/users/:_id/logs', async (req, res)=>{
     if(!user){
       return res.json({"error": "Not found"})
     }
-    user.log = user.log.map((obj)=>{
+    user.log = user.log.map((obj: any)=>{
       obj.date = obj.date.toDateString()
       return obj
     })
